@@ -3,74 +3,336 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Centro de Control Robótico - Caligrafía Secret</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Sistema de Reconocimiento Óptico Robo-Scan</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-green: #22c55e;
+      --accent-blue: #38bdf8;
+      --accent-red: #ef4444;
+      --text-color: #f8fafc;
+      --laser-color: #00ff66;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: var(--accent-blue);
+      margin-bottom: 5px;
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-top: 0;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .mission-text-phrase {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      background: #090d16;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px dashed var(--accent-green);
+      margin: 15px 0;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .word-block {
+      background: #1e293b;
+      color: var(--accent-green);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--accent-blue);
+      white-space: nowrap;
+    }
+
+    .instruction {
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+
+    /* ÁREA CÁMARA Y CAPTURA */
+    .video-container {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      background-color: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--accent-blue);
+    }
+
+    #webcam, #captured-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* FILTRO DE RECONOCIMIENTO ÓPTICO */
+    .ocr-filter {
+      filter: grayscale(100%) contrast(200%) brightness(90%);
+    }
+
+    .laser-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--laser-color);
+      box-shadow: 0 0 15px 3px var(--laser-color);
+      animation: scan 1.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes scan {
+      from { top: 5%; }
+      to { top: 90%; }
+    }
+
+    .grid-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-size: 30px 30px;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.15) 1px, transparent 1px);
+      pointer-events: none;
+    }
+
+    .status-overlay {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--accent-blue);
+      font-family: monospace;
+      font-size: 0.85rem;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid var(--accent-blue);
+      text-align: left;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: transform 0.1s ease;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary { background: var(--accent-blue); color: #000; width: 100%; }
+    .btn-success { background: var(--accent-green); color: #000; }
+    .btn-secondary { background: #64748b; color: #fff; }
+
+    .btn-top-secret {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.1);
+      color: #94a3b8;
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      z-index: 10;
+    }
+
+    /* SENSOR DISCRETO DOCENTE */
+    .discreet-toggle {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.2);
+      font-size: 0.75rem;
+      cursor: pointer;
+      z-index: 100;
+    }
+
+    .reward-box {
+      background: #0284c7;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    .error-box {
+      background: #7f1d1d;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border: 1px solid var(--accent-red);
+    }
+
+    .hidden { display: none !important; }
+
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: #94a3b8; }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #fff;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    #missions-list {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+    }
+
+    #missions-list li {
+      background: #0f172a;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- BOTÓN DOCENTE EN LA ESQUINA -->
-  <button id="btn-admin-toggle" class="btn-top-secret" onclick="toggleAdminPanel()">⚙️ Zona Maestra</button>
+  <!-- BOTONES DE CONTROL DOCENTE -->
+  <button id="btn-admin-toggle" class="btn-top-secret" onclick="toggleAdminPanel()">⚙️ Panel Maestra</button>
+  
+  <!-- Indicador discreto en la esquina inferior izquierda -->
+  <button id="sensor-mode-btn" class="discreet-toggle" onclick="toggleSensorMode()">[MODO: AUTOMÁTICO - ÉXITO]</button>
 
   <div class="container">
     <header>
       <h1>ROBO-SCAN 3000 🤖</h1>
-      <p class="subtitle">Misión de Transmisión de Código y Caligrafía</p>
+      <p class="subtitle">Módulo de Lectura y Análisis de Caligrafía</p>
     </header>
 
-    <!-- PANEL DEL ALUMNO -->
+    <!-- PANEL ALUMNO -->
     <main id="student-panel">
       <section class="card mission-card">
-        <h2>Transmisión de Datos Requerida</h2>
+        <h2>Misión de Transmisión</h2>
         
-        <!-- Contenedor para frases largas en bloques de palabras -->
-        <div id="mission-display" class="mission-text-phrase">Cargando frase...</div>
+        <div id="mission-display" class="mission-text-phrase">Cargando código...</div>
         
-        <p class="instruction">Copia la frase completa en tu plantilla (una letra por cuadro y deja un cuadro para los espacios). Luego escanea tu trabajo.</p>
-        <button class="btn-primary" onclick="openScanner()">📸 Activar Escáner del Robot</button>
+        <p class="instruction">Escribe la frase en tu plantilla cuadriculada. Cuando termines, coloca la hoja centrada en el escáner.</p>
+        <button class="btn-primary" onclick="openScanner()">📸 Iniciar Escáner Óptico</button>
       </section>
 
-      <!-- SECCIÓN DEL ESCÁNER (CÁMARA + LÁSER) -->
+      <!-- VISTA DE CÁMARA Y PROCESADO -->
       <section id="scanner-section" class="card hidden">
         <div class="video-container">
           <video id="webcam" autoplay playsinline></video>
-          <div class="laser-line"></div>
+          <canvas id="captured-canvas" class="hidden"></canvas>
+          <div id="laser" class="laser-line"></div>
           <div class="grid-overlay"></div>
+          <div id="status-text" class="status-overlay">CÁMARA LISTA: Enfoca la plantilla cuadriculada...</div>
         </div>
-        <div class="scanner-controls">
-          <button class="btn-success" onclick="processScan()">⚡ Analizar Transmisión</button>
-          <button class="btn-secondary" onclick="closeScanner()">Cancelar</button>
+        
+        <div class="scanner-controls" style="margin-top: 15px;">
+          <button id="btn-capture" class="btn-success" onclick="captureAndAnalyze()" style="width: 100%;">🔍 Capturar y Analizar Trazo</button>
+          <button class="btn-secondary" onclick="closeScanner()" style="margin-top: 10px; width: 100%;">Cancelar</button>
         </div>
       </section>
 
-      <!-- RESULTADO / RECOMPENSA -->
-      <section id="result-card" class="card hidden">
-        <div id="result-icon">🤖</div>
-        <h2 id="result-title">¡Código Aceptado!</h2>
-        <p id="result-message">Legibilidad perfecta. La frase ha sido procesada sin errores de sintaxis.</p>
+      <!-- RESULTADO ÉXITO -->
+      <section id="result-card-success" class="card hidden">
+        <div style="font-size: 3rem;">🤖✅</div>
+        <h2 style="color: var(--accent-green);">¡Muestra Procesada con Éxito!</h2>
+        <p>Análisis de matriz completado. Todos los caracteres respetan las casillas de alineación.</p>
 
         <div class="reward-box">
-          <span>Recompensa ganada:</span>
+          <span>Recompensa de Misión:</span>
           <h3 id="reward-text">🏅 Medalla de Precisión</h3>
         </div>
 
         <button class="btn-primary" onclick="nextMission()">Siguiente Misión 🚀</button>
       </section>
+
+      <!-- RESULTADO ERROR -->
+      <section id="result-card-error" class="card hidden">
+        <div style="font-size: 3rem;">🤖⚠️</div>
+        <h2 style="color: var(--accent-red);">¡Error de Reconocimiento!</h2>
+        <div class="error-box">
+          <p id="error-description">Error en el trazado: Se detectaron caracteres fuera de las casillas o trazos discontinuos.</p>
+        </div>
+        <p class="instruction">Repasa con cuidado los caracteres defectuosos y reintenta la lectura.</p>
+
+        <button class="btn-primary" onclick="retryMission()">Reintentar Escaneo 🔄</button>
+      </section>
     </main>
 
-    <!-- PANEL DE ADMINISTRACIÓN (DOCENTES) -->
+    <!-- PANEL MAESTRA -->
     <aside id="admin-panel" class="card hidden">
-      <h2>⚙️ Panel de Gestión de Misiones</h2>
-      <p>Añade o modifica las frases para el alumno sin necesidad de editar código.</p>
+      <h2>⚙️ Ajustes del Sistema</h2>
+      <p>Modo de evaluación del sensor:</p>
+      <div style="margin-bottom: 20px;">
+        <button class="btn-success" onclick="setMode(true)" style="margin-right: 5px;">Aprobar Siguiente Lectura</button>
+        <button class="btn-primary" style="background: var(--accent-red); color: white;" onclick="setMode(false)">Rechazar Siguiente Lectura</button>
+      </div>
 
+      <hr style="border-color: #334155; margin: 20px 0;">
+
+      <h3>Gestión de Frases</h3>
       <form id="mission-form" onsubmit="saveMission(event)">
         <div class="form-group">
           <label for="input-text">Frase o mensaje para escribir:</label>
-          <textarea id="input-text" rows="3" placeholder="Ej: EL ROBOT EXPLORA EL PLANETA MARTE EN BUSCA DE AGUA." required></textarea>
+          <textarea id="input-text" rows="3" placeholder="EJ: EL ROBOT EXPLORA EL PLANETA MARTE EN BUSCA DE AGUA." required></textarea>
         </div>
 
         <div class="form-group">
           <label for="input-reward">Recompensa al completarlo:</label>
-          <input type="text" id="input-reward" placeholder="Ej: 100 Puntos o 5 minutos de juego" required>
+          <input type="text" id="input-reward" placeholder="EJ: 100 Puntos" required>
         </div>
 
         <button type="submit" class="btn-success">➕ Guardar Frase</button>
@@ -81,6 +343,223 @@
     </aside>
   </div>
 
-  <script src="app.js"></script>
+  <script>
+    const defaultMissions = [
+      { 
+        text: "EL ROBOT EXPLORA EL PLANETA MARTE EN BUSCA DE AGUA", 
+        reward: "🏆 Medalla de Explorador Espacial" 
+      },
+      { 
+        text: "LA ENERGÍA DEL MOTOR PRINCIPAL ESTÁ AL CIEN POR CIENTO", 
+        reward: "⚡ 500 Puntos de Calibración" 
+      }
+    ];
+
+    let missions = JSON.parse(localStorage.getItem('robo_missions')) || defaultMissions;
+    let currentMissionIndex = 0;
+    let stream = null;
+    let forceSuccess = true; // Control de lectura por la maestra
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderMission();
+      renderAdminMissions();
+      updateSensorBtnText();
+    });
+
+    function renderMission() {
+      const displayContainer = document.getElementById("mission-display");
+      displayContainer.innerHTML = "";
+
+      if (missions.length === 0) {
+        displayContainer.innerText = "NO HAY FRASES REGISTRADAS";
+        return;
+      }
+
+      const currentText = missions[currentMissionIndex].text;
+      const words = currentText.split(" ");
+      words.forEach(word => {
+        if (word.trim() !== "") {
+          const span = document.createElement("span");
+          span.className = "word-block";
+          span.innerText = word;
+          displayContainer.appendChild(span);
+        }
+      });
+    }
+
+    async function openScanner() {
+      document.getElementById("scanner-section").classList.remove("hidden");
+      document.getElementById("result-card-success").classList.add("hidden");
+      document.getElementById("result-card-error").classList.add("hidden");
+      document.getElementById("webcam").classList.remove("hidden");
+      document.getElementById("captured-canvas").classList.add("hidden");
+      document.getElementById("btn-capture").disabled = false;
+      document.getElementById("status-text").innerText = "CÁMARA LISTA: Enfoca la plantilla cuadriculada...";
+
+      const video = document.getElementById("webcam");
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }
+        });
+        video.srcObject = stream;
+        playBeepSound(600, 0.1);
+      } catch (err) {
+        alert("Error al acceder a la cámara. Revisa los permisos de tu navegador.");
+        console.error(err);
+      }
+    }
+
+    function captureAndAnalyze() {
+      const video = document.getElementById("webcam");
+      const canvas = document.getElementById("captured-canvas");
+      const ctx = canvas.getContext("2d");
+      const statusText = document.getElementById("status-text");
+
+      // Ajustar dimensiones del canvas
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+
+      // Dibujar la foto exacta de la cámara en el canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Ocultar la cámara en vivo y mostrar la FOTO ESTÁTICA congelada
+      video.classList.add("hidden");
+      canvas.classList.remove("hidden");
+      canvas.classList.add("ocr-filter"); // Aplica el filtro visual estilo escáner binario/óptico
+
+      document.getElementById("btn-capture").disabled = true;
+
+      // Simulación de análisis paso a paso en pantalla para dar credibilidad total
+      playBeepSound(800, 0.15);
+      statusText.innerText = "PROCESANDO: Extrayendo matriz de bordes...";
+
+      setTimeout(() => {
+        playBeepSound(1000, 0.15);
+        statusText.innerText = "PROCESANDO: Verificando alineación dentro de casillas...";
+      }, 1200);
+
+      setTimeout(() => {
+        playBeepSound(1200, 0.2);
+        statusText.innerText = "PROCESANDO: Comparando patrón con plantilla de referencia...";
+      }, 2400);
+
+      // Resultado final tras 3.5 segundos de análisis visual
+      setTimeout(() => {
+        closeScanner();
+
+        if (forceSuccess) {
+          const currentMission = missions[currentMissionIndex];
+          document.getElementById("reward-text").innerText = currentMission.reward;
+          document.getElementById("result-card-success").classList.remove("hidden");
+          playBeepSound(1500, 0.4);
+        } else {
+          document.getElementById("result-card-error").classList.remove("hidden");
+          playBeepSound(300, 0.5);
+        }
+      }, 3600);
+    }
+
+    function closeScanner() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      document.getElementById("scanner-section").classList.add("hidden");
+    }
+
+    function setMode(success) {
+      forceSuccess = success;
+      updateSensorBtnText();
+      alert(`Siguiente escaneo configurado como: ${success ? 'ÉXITO' : 'ERROR'}`);
+    }
+
+    function toggleSensorMode() {
+      forceSuccess = !forceSuccess;
+      updateSensorBtnText();
+    }
+
+    function updateSensorBtnText() {
+      const btn = document.getElementById("sensor-mode-btn");
+      btn.innerText = `[SENSOR: ${forceSuccess ? 'CORRECTO' : 'ERROR'}]`;
+      btn.style.color = forceSuccess ? "rgba(34, 197, 94, 0.4)" : "rgba(239, 68, 68, 0.6)";
+    }
+
+    function retryMission() {
+      document.getElementById("result-card-error").classList.add("hidden");
+      openScanner();
+    }
+
+    function nextMission() {
+      document.getElementById("result-card-success").classList.add("hidden");
+      currentMissionIndex = (currentMissionIndex + 1) % missions.length;
+      renderMission();
+    }
+
+    function toggleAdminPanel() {
+      const panel = document.getElementById("admin-panel");
+      panel.classList.toggle("hidden");
+    }
+
+    function saveMission(event) {
+      event.preventDefault();
+      const textInput = document.getElementById("input-text");
+      const rewardInput = document.getElementById("input-reward");
+
+      const newMission = {
+        text: textInput.value.toUpperCase().trim(),
+        reward: rewardInput.value.trim()
+      };
+
+      missions.push(newMission);
+      localStorage.setItem('robo_missions', JSON.stringify(missions));
+
+      textInput.value = "";
+      rewardInput.value = "";
+
+      renderMission();
+      renderAdminMissions();
+    }
+
+    function deleteMission(index) {
+      missions.splice(index, 1);
+      localStorage.setItem('robo_missions', JSON.stringify(missions));
+      if (currentMissionIndex >= missions.length) {
+        currentMissionIndex = 0;
+      }
+      renderMission();
+      renderAdminMissions();
+    }
+
+    function renderAdminMissions() {
+      const list = document.getElementById("missions-list");
+      list.innerHTML = "";
+
+      missions.forEach((m, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span><strong>${m.text.substring(0, 30)}${m.text.length > 30 ? '...' : ''}</strong> (${m.reward})</span>
+          <button class="btn-secondary" style="padding: 4px 8px;" onclick="deleteMission(${index})">❌</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function playBeepSound(freq, duration) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sawtooth";
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+  </script>
 </body>
 </html>
