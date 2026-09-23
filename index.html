@@ -90,7 +90,7 @@
       margin-bottom: 15px;
     }
 
-    /* ÁREA CÁMARA Y CAPTURA */
+    /* CÁMARA Y CAPTURA */
     .video-container {
       position: relative;
       width: 100%;
@@ -107,7 +107,6 @@
       object-fit: cover;
     }
 
-    /* FILTRO DE RECONOCIMIENTO ÓPTICO */
     .ocr-filter {
       filter: grayscale(100%) contrast(200%) brightness(90%);
     }
@@ -182,17 +181,43 @@
       z-index: 10;
     }
 
-    /* SENSOR DISCRETO DOCENTE */
-    .discreet-toggle {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      background: transparent;
-      border: none;
-      color: rgba(255,255,255,0.2);
-      font-size: 0.75rem;
-      cursor: pointer;
-      z-index: 100;
+    /* PANTALLA TECLADO VIRTUAL PIN */
+    .pin-display {
+      font-size: 2.5rem;
+      letter-spacing: 12px;
+      text-align: center;
+      padding: 10px;
+      margin: 15px auto;
+      background: #0f172a;
+      border: 2px solid var(--accent-blue);
+      color: var(--accent-green);
+      border-radius: 8px;
+      min-height: 45px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 280px;
+      margin: 0 auto 15px auto;
+    }
+
+    .num-btn {
+      background: #334155;
+      color: #fff;
+      font-size: 1.4rem;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+    }
+
+    .num-btn:active {
+      background: var(--accent-blue);
+      color: #000;
     }
 
     .reward-box {
@@ -246,16 +271,12 @@
 </head>
 <body>
 
-  <!-- BOTONES DE CONTROL DOCENTE -->
-  <button id="btn-admin-toggle" class="btn-top-secret" onclick="toggleAdminPanel()">⚙️ Panel Maestra</button>
-  
-  <!-- Indicador discreto en la esquina inferior izquierda -->
-  <button id="sensor-mode-btn" class="discreet-toggle" onclick="toggleSensorMode()">[MODO: AUTOMÁTICO - ÉXITO]</button>
+  <button id="btn-admin-toggle" class="btn-top-secret" onclick="toggleAdminPanel()">⚙️ Configurar Claves</button>
 
   <div class="container">
     <header>
       <h1>ROBO-SCAN 3000 🤖</h1>
-      <p class="subtitle">Módulo de Lectura y Análisis de Caligrafía</p>
+      <p class="subtitle">Sistema de Reconocimiento de Caligrafía</p>
     </header>
 
     <!-- PANEL ALUMNO -->
@@ -265,11 +286,11 @@
         
         <div id="mission-display" class="mission-text-phrase">Cargando código...</div>
         
-        <p class="instruction">Escribe la frase en tu plantilla cuadriculada. Cuando termines, coloca la hoja centrada en el escáner.</p>
+        <p class="instruction">Copia la frase en tu plantilla. Cuando termines, coloca la hoja en el escáner.</p>
         <button class="btn-primary" onclick="openScanner()">📸 Iniciar Escáner Óptico</button>
       </section>
 
-      <!-- VISTA DE CÁMARA Y PROCESADO -->
+      <!-- ESCÁNER -->
       <section id="scanner-section" class="card hidden">
         <div class="video-container">
           <video id="webcam" autoplay playsinline></video>
@@ -285,11 +306,39 @@
         </div>
       </section>
 
+      <!-- AUTORIZACIÓN CON TECLADO NUMÉRICO Y CONTRASEÑA ENMASCARADA -->
+      <section id="auth-section" class="card hidden">
+        <div style="font-size: 2.2rem;">🔑</div>
+        <h2>Autorización de Supervisor</h2>
+        <p class="instruction">Introduce la clave de validación del sistema:</p>
+        
+        <!-- Muestra únicamente puntos negros u ocultos -->
+        <div id="pin-dots" class="pin-display"></div>
+
+        <!-- TECLADO NUMÉRICO EN PANTALLA -->
+        <div class="numpad">
+          <button class="num-btn" onclick="pressNum('1')">1</button>
+          <button class="num-btn" onclick="pressNum('2')">2</button>
+          <button class="num-btn" onclick="pressNum('3')">3</button>
+          <button class="num-btn" onclick="pressNum('4')">4</button>
+          <button class="num-btn" onclick="pressNum('5')">5</button>
+          <button class="num-btn" onclick="pressNum('6')">6</button>
+          <button class="num-btn" onclick="pressNum('7')">7</button>
+          <button class="num-btn" onclick="pressNum('8')">8</button>
+          <button class="num-btn" onclick="pressNum('9')">9</button>
+          <button class="num-btn" onclick="clearPin()" style="background: #ef4444; color: white;">⌫</button>
+          <button class="num-btn" onclick="pressNum('0')">0</button>
+          <button class="num-btn" onclick="submitPin()" style="background: var(--accent-green); color: black;">✓</button>
+        </div>
+
+        <button class="btn-secondary" onclick="closeAuth()">Cancelar</button>
+      </section>
+
       <!-- RESULTADO ÉXITO -->
       <section id="result-card-success" class="card hidden">
         <div style="font-size: 3rem;">🤖✅</div>
-        <h2 style="color: var(--accent-green);">¡Muestra Procesada con Éxito!</h2>
-        <p>Análisis de matriz completado. Todos los caracteres respetan las casillas de alineación.</p>
+        <h2 style="color: var(--accent-green);">¡Muestra Aprobada!</h2>
+        <p>Análisis de matriz completado. Todos los caracteres respetan el formato y margen de las casillas.</p>
 
         <div class="reward-box">
           <span>Recompensa de Misión:</span>
@@ -304,9 +353,9 @@
         <div style="font-size: 3rem;">🤖⚠️</div>
         <h2 style="color: var(--accent-red);">¡Error de Reconocimiento!</h2>
         <div class="error-box">
-          <p id="error-description">Error en el trazado: Se detectaron caracteres fuera de las casillas o trazos discontinuos.</p>
+          <p>Se detectaron letras fuera de margen o trazos ilegibles. El sensor no puede procesar el texto.</p>
         </div>
-        <p class="instruction">Repasa con cuidado los caracteres defectuosos y reintenta la lectura.</p>
+        <p class="instruction">Borra o repasa con cuidado las letras defectuosas y vuelve a escanear.</p>
 
         <button class="btn-primary" onclick="retryMission()">Reintentar Escaneo 🔄</button>
       </section>
@@ -314,12 +363,20 @@
 
     <!-- PANEL MAESTRA -->
     <aside id="admin-panel" class="card hidden">
-      <h2>⚙️ Ajustes del Sistema</h2>
-      <p>Modo de evaluación del sensor:</p>
-      <div style="margin-bottom: 20px;">
-        <button class="btn-success" onclick="setMode(true)" style="margin-right: 5px;">Aprobar Siguiente Lectura</button>
-        <button class="btn-primary" style="background: var(--accent-red); color: white;" onclick="setMode(false)">Rechazar Siguiente Lectura</button>
+      <h2>⚙️ Configuración de Claves de Supervisor</h2>
+      <p>Códigos para validar el escaneo frente al alumno:</p>
+      
+      <div class="form-group">
+        <label for="code-pass">Clave para APROBAR (Escribir bien):</label>
+        <input type="text" id="code-pass" value="1111" maxlength="6">
       </div>
+
+      <div class="form-group">
+        <label for="code-fail">Clave para RECHAZAR (Error de trazo):</label>
+        <input type="text" id="code-fail" value="0000" maxlength="6">
+      </div>
+      
+      <button class="btn-success" onclick="saveCodes()">💾 Guardar Claves</button>
 
       <hr style="border-color: #334155; margin: 20px 0;">
 
@@ -356,14 +413,18 @@
     ];
 
     let missions = JSON.parse(localStorage.getItem('robo_missions')) || defaultMissions;
+    let codePass = localStorage.getItem('robo_code_pass') || "1111";
+    let codeFail = localStorage.getItem('robo_code_fail') || "0000";
+
     let currentMissionIndex = 0;
     let stream = null;
-    let forceSuccess = true; // Control de lectura por la maestra
+    let enteredPin = "";
 
     document.addEventListener("DOMContentLoaded", () => {
       renderMission();
       renderAdminMissions();
-      updateSensorBtnText();
+      document.getElementById("code-pass").value = codePass;
+      document.getElementById("code-fail").value = codeFail;
     });
 
     function renderMission() {
@@ -389,6 +450,7 @@
 
     async function openScanner() {
       document.getElementById("scanner-section").classList.remove("hidden");
+      document.getElementById("auth-section").classList.add("hidden");
       document.getElementById("result-card-success").classList.add("hidden");
       document.getElementById("result-card-error").classList.add("hidden");
       document.getElementById("webcam").classList.remove("hidden");
@@ -416,21 +478,17 @@
       const ctx = canvas.getContext("2d");
       const statusText = document.getElementById("status-text");
 
-      // Ajustar dimensiones del canvas
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
 
-      // Dibujar la foto exacta de la cámara en el canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Ocultar la cámara en vivo y mostrar la FOTO ESTÁTICA congelada
       video.classList.add("hidden");
       canvas.classList.remove("hidden");
-      canvas.classList.add("ocr-filter"); // Aplica el filtro visual estilo escáner binario/óptico
+      canvas.classList.add("ocr-filter");
 
       document.getElementById("btn-capture").disabled = true;
 
-      // Simulación de análisis paso a paso en pantalla para dar credibilidad total
       playBeepSound(800, 0.15);
       statusText.innerText = "PROCESANDO: Extrayendo matriz de bordes...";
 
@@ -441,23 +499,60 @@
 
       setTimeout(() => {
         playBeepSound(1200, 0.2);
-        statusText.innerText = "PROCESANDO: Comparando patrón con plantilla de referencia...";
+        statusText.innerText = "ANÁLISIS COMPLETO: Solicitando clave de supervisor...";
       }, 2400);
 
-      // Resultado final tras 3.5 segundos de análisis visual
       setTimeout(() => {
         closeScanner();
+        openAuthScreen();
+      }, 3200);
+    }
 
-        if (forceSuccess) {
-          const currentMission = missions[currentMissionIndex];
-          document.getElementById("reward-text").innerText = currentMission.reward;
-          document.getElementById("result-card-success").classList.remove("hidden");
-          playBeepSound(1500, 0.4);
-        } else {
-          document.getElementById("result-card-error").classList.remove("hidden");
-          playBeepSound(300, 0.5);
-        }
-      }, 3600);
+    function openAuthScreen() {
+      enteredPin = "";
+      updatePinDisplay();
+      document.getElementById("auth-section").classList.remove("hidden");
+    }
+
+    function pressNum(num) {
+      if (enteredPin.length < 6) {
+        enteredPin += num;
+        playBeepSound(900, 0.08);
+        updatePinDisplay();
+      }
+    }
+
+    function clearPin() {
+      enteredPin = "";
+      playBeepSound(400, 0.08);
+      updatePinDisplay();
+    }
+
+    function updatePinDisplay() {
+      // Dibuja puntos "•" en lugar de mostrar los números tecleados
+      const display = document.getElementById("pin-dots");
+      display.innerText = "•".repeat(enteredPin.length);
+    }
+
+    function submitPin() {
+      document.getElementById("auth-section").classList.add("hidden");
+
+      if (enteredPin === codePass) {
+        const currentMission = missions[currentMissionIndex];
+        document.getElementById("reward-text").innerText = currentMission.reward;
+        document.getElementById("result-card-success").classList.remove("hidden");
+        playBeepSound(1500, 0.4);
+      } else if (enteredPin === codeFail) {
+        document.getElementById("result-card-error").classList.remove("hidden");
+        playBeepSound(300, 0.5);
+      } else {
+        alert("⚠️ Código de Supervisor no válido.");
+        openAuthScreen();
+      }
+    }
+
+    function closeAuth() {
+      document.getElementById("auth-section").classList.add("hidden");
     }
 
     function closeScanner() {
@@ -467,21 +562,12 @@
       document.getElementById("scanner-section").classList.add("hidden");
     }
 
-    function setMode(success) {
-      forceSuccess = success;
-      updateSensorBtnText();
-      alert(`Siguiente escaneo configurado como: ${success ? 'ÉXITO' : 'ERROR'}`);
-    }
-
-    function toggleSensorMode() {
-      forceSuccess = !forceSuccess;
-      updateSensorBtnText();
-    }
-
-    function updateSensorBtnText() {
-      const btn = document.getElementById("sensor-mode-btn");
-      btn.innerText = `[SENSOR: ${forceSuccess ? 'CORRECTO' : 'ERROR'}]`;
-      btn.style.color = forceSuccess ? "rgba(34, 197, 94, 0.4)" : "rgba(239, 68, 68, 0.6)";
+    function saveCodes() {
+      codePass = document.getElementById("code-pass").value.trim();
+      codeFail = document.getElementById("code-fail").value.trim();
+      localStorage.setItem('robo_code_pass', codePass);
+      localStorage.setItem('robo_code_fail', codeFail);
+      alert("Claves guardadas correctamente.");
     }
 
     function retryMission() {
