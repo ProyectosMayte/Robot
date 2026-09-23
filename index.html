@@ -240,7 +240,7 @@
     .form-group { text-align: left; margin-bottom: 15px; }
     .form-group label { display: block; margin-bottom: 5px; color: #94a3b8; }
 
-    textarea, input[type="text"] {
+    textarea, input[type="text"], input[type="password"] {
       width: 100%;
       padding: 10px;
       border-radius: 6px;
@@ -271,7 +271,7 @@
 </head>
 <body>
 
-  <button id="btn-admin-toggle" class="btn-top-secret" onclick="toggleAdminPanel()">⚙️ Configurar Claves</button>
+  <button id="btn-admin-toggle" class="btn-top-secret" onclick="requestAdminAccess()">⚙️ Configurar Claves</button>
 
   <div class="container">
     <header>
@@ -306,16 +306,14 @@
         </div>
       </section>
 
-      <!-- AUTORIZACIÓN CON TECLADO NUMÉRICO Y CONTRASEÑA ENMASCARADA -->
+      <!-- AUTORIZACIÓN CON TECLADO NUMÉRICO -->
       <section id="auth-section" class="card hidden">
         <div style="font-size: 2.2rem;">🔑</div>
         <h2>Autorización de Supervisor</h2>
         <p class="instruction">Introduce la clave de validación del sistema:</p>
         
-        <!-- Muestra únicamente puntos negros u ocultos -->
         <div id="pin-dots" class="pin-display"></div>
 
-        <!-- TECLADO NUMÉRICO EN PANTALLA -->
         <div class="numpad">
           <button class="num-btn" onclick="pressNum('1')">1</button>
           <button class="num-btn" onclick="pressNum('2')">2</button>
@@ -363,9 +361,20 @@
 
     <!-- PANEL MAESTRA -->
     <aside id="admin-panel" class="card hidden">
-      <h2>⚙️ Configuración de Claves de Supervisor</h2>
-      <p>Códigos para validar el escaneo frente al alumno:</p>
-      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="margin: 0;">⚙️ Panel de Control</h2>
+        <button class="btn-secondary" onclick="closeAdminPanel()" style="padding: 5px 10px;">✖ Cerrar</button>
+      </div>
+
+      <hr style="border-color: #334155; margin-bottom: 15px;">
+
+      <h3>Contraseña de Acceso al Panel</h3>
+      <div class="form-group">
+        <label for="admin-pass">Contraseña para abrir este menú:</label>
+        <input type="password" id="admin-pass" value="admin">
+      </div>
+
+      <h3>Claves de Evaluación Frente al Alumno</h3>
       <div class="form-group">
         <label for="code-pass">Clave para APROBAR (Escribir bien):</label>
         <input type="text" id="code-pass" value="1111" maxlength="6">
@@ -376,7 +385,7 @@
         <input type="text" id="code-fail" value="0000" maxlength="6">
       </div>
       
-      <button class="btn-success" onclick="saveCodes()">💾 Guardar Claves</button>
+      <button class="btn-success" onclick="saveSettings()" style="width: 100%;">💾 Guardar Configuración de Claves</button>
 
       <hr style="border-color: #334155; margin: 20px 0;">
 
@@ -392,7 +401,7 @@
           <input type="text" id="input-reward" placeholder="EJ: 100 Puntos" required>
         </div>
 
-        <button type="submit" class="btn-success">➕ Guardar Frase</button>
+        <button type="submit" class="btn-success" style="width: 100%;">➕ Añadir Frase a la Lista</button>
       </form>
 
       <h3>Frases Registradas</h3>
@@ -415,6 +424,7 @@
     let missions = JSON.parse(localStorage.getItem('robo_missions')) || defaultMissions;
     let codePass = localStorage.getItem('robo_code_pass') || "1111";
     let codeFail = localStorage.getItem('robo_code_fail') || "0000";
+    let adminPass = localStorage.getItem('robo_admin_pass') || "admin";
 
     let currentMissionIndex = 0;
     let stream = null;
@@ -425,6 +435,7 @@
       renderAdminMissions();
       document.getElementById("code-pass").value = codePass;
       document.getElementById("code-fail").value = codeFail;
+      document.getElementById("admin-pass").value = adminPass;
     });
 
     function renderMission() {
@@ -446,6 +457,35 @@
           displayContainer.appendChild(span);
         }
       });
+    }
+
+    function requestAdminAccess() {
+      const input = prompt("🔐 Introduce la contraseña de Administrador:");
+      if (input === null) return; // Cancelado
+
+      if (input === adminPass) {
+        document.getElementById("admin-panel").classList.remove("hidden");
+        document.getElementById("student-panel").classList.add("hidden");
+      } else {
+        alert("❌ Contraseña de Administrador incorrecta.");
+      }
+    }
+
+    function closeAdminPanel() {
+      document.getElementById("admin-panel").classList.add("hidden");
+      document.getElementById("student-panel").classList.remove("hidden");
+    }
+
+    function saveSettings() {
+      codePass = document.getElementById("code-pass").value.trim();
+      codeFail = document.getElementById("code-fail").value.trim();
+      adminPass = document.getElementById("admin-pass").value.trim();
+
+      localStorage.setItem('robo_code_pass', codePass);
+      localStorage.setItem('robo_code_fail', codeFail);
+      localStorage.setItem('robo_admin_pass', adminPass);
+
+      alert("✅ Configuración guardada correctamente.");
     }
 
     async function openScanner() {
@@ -529,7 +569,6 @@
     }
 
     function updatePinDisplay() {
-      // Dibuja puntos "•" en lugar de mostrar los números tecleados
       const display = document.getElementById("pin-dots");
       display.innerText = "•".repeat(enteredPin.length);
     }
@@ -562,14 +601,6 @@
       document.getElementById("scanner-section").classList.add("hidden");
     }
 
-    function saveCodes() {
-      codePass = document.getElementById("code-pass").value.trim();
-      codeFail = document.getElementById("code-fail").value.trim();
-      localStorage.setItem('robo_code_pass', codePass);
-      localStorage.setItem('robo_code_fail', codeFail);
-      alert("Claves guardadas correctamente.");
-    }
-
     function retryMission() {
       document.getElementById("result-card-error").classList.add("hidden");
       openScanner();
@@ -579,11 +610,6 @@
       document.getElementById("result-card-success").classList.add("hidden");
       currentMissionIndex = (currentMissionIndex + 1) % missions.length;
       renderMission();
-    }
-
-    function toggleAdminPanel() {
-      const panel = document.getElementById("admin-panel");
-      panel.classList.toggle("hidden");
     }
 
     function saveMission(event) {
