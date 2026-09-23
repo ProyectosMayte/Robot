@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Control Robótico - Caligrafía Secret</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- BOTÓN DOCENTE EN LA ESQUINA -->
+  <button id="btn-admin-toggle" class="btn-top-secret" onclick="toggleAdminPanel()">⚙️ Zona Maestra</button>
+
+  <div class="container">
+    <header>
+      <h1>ROBO-SCAN 3000 🤖</h1>
+      <p class="subtitle">Misión de Transmisión de Código y Caligrafía</p>
+    </header>
+
+    <!-- PANEL DEL ALUMNO -->
+    <main id="student-panel">
+      <section class="card mission-card">
+        <h2>Transmisión de Datos Requerida</h2>
+        
+        <!-- Contenedor para frases largas en bloques de palabras -->
+        <div id="mission-display" class="mission-text-phrase">Cargando frase...</div>
+        
+        <p class="instruction">Copia la frase completa en tu plantilla (una letra por cuadro y deja un cuadro para los espacios). Luego escanea tu trabajo.</p>
+        <button class="btn-primary" onclick="openScanner()">📸 Activar Escáner del Robot</button>
+      </section>
+
+      <!-- SECCIÓN DEL ESCÁNER (CÁMARA + LÁSER) -->
+      <section id="scanner-section" class="card hidden">
+        <div class="video-container">
+          <video id="webcam" autoplay playsinline></video>
+          <div class="laser-line"></div>
+          <div class="grid-overlay"></div>
+        </div>
+        <div class="scanner-controls">
+          <button class="btn-success" onclick="processScan()">⚡ Analizar Transmisión</button>
+          <button class="btn-secondary" onclick="closeScanner()">Cancelar</button>
+        </div>
+      </section>
+
+      <!-- RESULTADO / RECOMPENSA -->
+      <section id="result-card" class="card hidden">
+        <div id="result-icon">🤖</div>
+        <h2 id="result-title">¡Código Aceptado!</h2>
+        <p id="result-message">Legibilidad perfecta. La frase ha sido procesada sin errores de sintaxis.</p>
+
+        <div class="reward-box">
+          <span>Recompensa ganada:</span>
+          <h3 id="reward-text">🏅 Medalla de Precisión</h3>
+        </div>
+
+        <button class="btn-primary" onclick="nextMission()">Siguiente Misión 🚀</button>
+      </section>
+    </main>
+
+    <!-- PANEL DE ADMINISTRACIÓN (DOCENTES) -->
+    <aside id="admin-panel" class="card hidden">
+      <h2>⚙️ Panel de Gestión de Misiones</h2>
+      <p>Añade o modifica las frases para el alumno sin necesidad de editar código.</p>
+
+      <form id="mission-form" onsubmit="saveMission(event)">
+        <div class="form-group">
+          <label for="input-text">Frase o mensaje para escribir:</label>
+          <textarea id="input-text" rows="3" placeholder="Ej: EL ROBOT EXPLORA EL PLANETA MARTE EN BUSCA DE AGUA." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="input-reward">Recompensa al completarlo:</label>
+          <input type="text" id="input-reward" placeholder="Ej: 100 Puntos o 5 minutos de juego" required>
+        </div>
+
+        <button type="submit" class="btn-success">➕ Guardar Frase</button>
+      </form>
+
+      <h3>Frases Registradas</h3>
+      <ul id="missions-list"></ul>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
